@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/ManagerDashboard';
 import FeedbackFormPage from './pages/FeedbackFormPage';
 import MyScoresPage from './pages/MyScoresPage';
+import HRDashboard from './pages/HRDashboard';
 
 // Pages — loaded lazily in later phases; stubbed here so routing works now
 // These will be replaced with real components in Phase 6, 7, 8
@@ -78,7 +79,7 @@ export default function App() {
             path="/hr"
             element={
               <ProtectedRoute roles={['hr']}>
-                <ComingSoon label="HR Dashboard" />
+                <HRDashboard />
               </ProtectedRoute>
             }
           />
