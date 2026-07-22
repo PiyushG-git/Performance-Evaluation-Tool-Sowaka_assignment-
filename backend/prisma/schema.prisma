@@ -1,0 +1,125 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  hr
+  manager
+  employee
+}
+
+enum CycleStatus {
+  open
+  closed
+}
+
+enum Parameter {
+  OWNERSHIP
+  COMMUNICATION
+  QUALITY_OF_WORK
+  COLLABORATION
+  INITIATIVE
+}
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users          User[]
+  feedbackCycles FeedbackCycle[]
+}
+
+model User {
+  id           String  @id @default(cuid())
+  companyId    String
+  name         String
+  email        String  @unique
+  passwordHash String
+  role         Role
+  reportsToId  String? // nullable — top-level users (CEO/Founder) have no manager
+
+  // Relations
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Self-referential hierarchy: a user reports to another user
+  reportsTo User?  @relation("Hierarchy", fields: [reportsToId], references: [id])
+  reports   User[] @relation("Hierarchy") // direct reports of this user
+
+  // Feedback relations
+  reviewsGiven    FeedbackSubmission[] @relation("Reviewer")
+  reviewsReceived FeedbackSubmission[] @relation("Reviewee")
+
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@index([reportsToId])
+}
+
+model FeedbackCycle {
+  id        String      @id @default(cuid())
+  companyId String
+  year      Int
+  month     Int // 1–12
+  status    CycleStatus @default(open)
+
+  company     Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  submissions FeedbackSubmission[]
+
+  createdAt DateTime @default(now())
+
+  // One cycle per company per month
+  @@unique([companyId, year, month])
+  @@index([companyId])
+}
+
+model FeedbackSubmission {
+  id          String    @id @default(cuid())
+  cycleId     String
+  reviewerId  String // the manager giving the feedback
+  revieweeId  String // the employee receiving the feedback
+  isDraft     Boolean   @default(true)
+  submittedAt DateTime?
+
+  cycle    FeedbackCycle   @relation(fields: [cycleId], references: [id], onDelete: Cascade)
+  reviewer User            @relation("Reviewer", fields: [reviewerId], references: [id])
+  reviewee User            @relation("Reviewee", fields: [revieweeId], references: [id])
+  scores   FeedbackScore[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // A manager can only submit one feedback per employee per cycle
+  @@unique([cycleId, reviewerId, revieweeId])
+  @@index([cycleId])
+  @@index([revieweeId])
+}
+
+model FeedbackScore {
+  id           String    @id @default(cuid())
+  submissionId String
+  parameter    Parameter
+  score        Int // 1–5
+  comment      String    @db.Text
+
+  submission FeedbackSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  // One score per parameter per submission
+  @@unique([submissionId, parameter])
+}
