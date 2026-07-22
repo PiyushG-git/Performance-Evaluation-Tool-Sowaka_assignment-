@@ -7,6 +7,7 @@ import ManagerDashboard from './pages/ManagerDashboard';
 import FeedbackFormPage from './pages/FeedbackFormPage';
 import MyScoresPage from './pages/MyScoresPage';
 import HRDashboard from './pages/HRDashboard';
+import HREmployeeHistory from './pages/HREmployeeHistory';
 
 // Smart default redirect based on role
 function DefaultRedirect() {
@@ -61,6 +62,14 @@ export default function App() {
                       element={
                         <ProtectedRoute roles={['hr']}>
                           <HRDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="hr/employee/:userId"
+                      element={
+                        <ProtectedRoute roles={['hr']}>
+                          <HREmployeeHistory />
                         </ProtectedRoute>
                       }
                     />

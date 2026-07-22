@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import ManagerPendingRow from '../components/ManagerPendingRow';
 
 const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -113,6 +114,7 @@ function PendingTab({ data }) {
 
 function DirectoryTab({ employees, cycle }) {
   const [search, setSearch] = useState('');
+  const navigate = useNavigate();
 
   const filtered = employees.filter((e) =>
     e.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -146,6 +148,7 @@ function DirectoryTab({ employees, cycle }) {
                 <th>Manager</th>
                 <th style={{ textAlign: 'center' }}>Direct Reports?</th>
                 <th style={{ textAlign: 'center' }}>Feedback Status ({MONTH_NAMES[cycle?.month]})</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -177,6 +180,14 @@ function DirectoryTab({ employees, cycle }) {
                     {emp.currentCycleFeedbackReceived
                       ? <span className="badge badge-success">✓ Received</span>
                       : <span className="badge badge-danger">Pending</span>}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      onClick={() => navigate(`/hr/employee/${emp.id}`)}
+                    >
+                      View History
+                    </button>
                   </td>
                 </tr>
               ))}
