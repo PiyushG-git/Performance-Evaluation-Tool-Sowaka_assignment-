@@ -1,40 +1,45 @@
-import { useState } from 'react';
-import './ParameterScoreInput.css';
-
 const PARAMETER_META = {
   OWNERSHIP: {
+    num: 1,
     label: 'Ownership',
-    desc: 'Takes accountability, follows through on commitments without being chased',
-    icon: '🎯',
+    desc: 'Takes initiative, follows through on commitments, and takes full accountability for outcomes.',
+    placeholder: 'Provide specific examples of ownership shown this month...',
   },
   COMMUNICATION: {
+    num: 2,
     label: 'Communication',
-    desc: 'Expresses ideas clearly, listens actively, and keeps stakeholders informed',
-    icon: '💬',
+    desc: 'Effectiveness in verbal and written interactions, active listening, and keeping stakeholders aligned.',
+    placeholder: 'Feedback on communication clarity, style, and timeliness...',
   },
   QUALITY_OF_WORK: {
+    num: 3,
     label: 'Quality of Work',
-    desc: 'Delivers accurate, thorough work that meets or exceeds expectations',
-    icon: '✅',
+    desc: 'Accuracy, attention to detail, and overall thoroughness of output delivered.',
+    placeholder: 'Examples of quality standards met or exceeded this month...',
   },
   COLLABORATION: {
+    num: 4,
     label: 'Collaboration',
-    desc: 'Works well with teammates, shares knowledge, and uplifts the team',
-    icon: '🤝',
+    desc: 'Works constructively within the team, shares knowledge, and supports cross-functional partners.',
+    placeholder: 'Notes on teamwork, cross-functional collaboration, and peer support...',
   },
   INITIATIVE: {
-    label: 'Initiative',
-    desc: 'Proactively identifies problems and opportunities without waiting to be asked',
-    icon: '🚀',
+    num: 5,
+    label: 'Reliability & Initiative',
+    desc: 'Consistency in performance, meeting deadlines, attendance, and proactive problem solving.',
+    placeholder: 'Observations on initiative taken and consistency in meeting goals...',
   },
 };
 
-const SCORE_LABELS = ['', 'Needs improvement', 'Below expectations', 'Meets expectations', 'Above expectations', 'Outstanding'];
+const SCORE_LABELS = ['', 'Needs Improvement', 'Below Expectations', 'Meets Expectations', 'Exceeds Expectations', 'Outstanding'];
 
 export default function ParameterScoreInput({ parameter, score, comment, onChange, readOnly }) {
-  const [hovered, setHovered] = useState(0);
-  const meta = PARAMETER_META[parameter] ?? { label: parameter, desc: '', icon: '📊' };
-  const displayScore = hovered || score || 0;
+  const meta = PARAMETER_META[parameter] ?? {
+    num: 1,
+    label: parameter,
+    desc: 'Evaluation criterion',
+    placeholder: 'Enter detailed feedback...',
+  };
 
   const handleScore = (val) => {
     if (!readOnly) onChange({ parameter, score: val, comment });
@@ -45,48 +50,52 @@ export default function ParameterScoreInput({ parameter, score, comment, onChang
   };
 
   return (
-    <div className={`param-card card ${score ? 'param-card-scored' : ''}`} id={`param-${parameter}`}>
-      <div className="param-header">
-        <div className="param-icon">{meta.icon}</div>
-        <div className="param-info">
-          <h3 className="param-label">{meta.label}</h3>
-          <p className="param-desc text-muted">{meta.desc}</p>
+    <div className="eval-block card" id={`param-${parameter}`} style={{ marginBottom: 'var(--s-6)' }}>
+      {/* Parameter Title & Description */}
+      <div className="eval-block-header">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <span className="eval-num">{meta.num}</span>
+            <h3 className="eval-label">{meta.label}</h3>
+          </div>
+          {score > 0 && (
+            <span className={`badge score-${score}`} style={{ marginLeft: 'auto', padding: '4px 12px' }}>
+              Score: {score} — {SCORE_LABELS[score]}
+            </span>
+          )}
         </div>
-        {score > 0 && (
-          <div className={`score-chip score-${score}`}>{score}</div>
-        )}
+        <p className="eval-desc">{meta.desc}</p>
       </div>
 
-      {/* Star rating */}
-      <div className="param-stars" role="radiogroup" aria-label={`Score for ${meta.label}`}>
-        {[1, 2, 3, 4, 5].map((val) => (
-          <button
-            key={val}
-            type="button"
-            className={`star-btn ${displayScore >= val ? 'star-active' : ''}`}
-            onClick={() => handleScore(val)}
-            onMouseEnter={() => !readOnly && setHovered(val)}
-            onMouseLeave={() => setHovered(0)}
-            aria-label={`${val} — ${SCORE_LABELS[val]}`}
-            disabled={readOnly}
-          >
-            ★
-          </button>
-        ))}
-        <span className="score-label-text">
-          {displayScore > 0 ? SCORE_LABELS[displayScore] : 'Select a score'}
-        </span>
+      {/* Rating Buttons (1 to 5) */}
+      <div className="form-group" style={{ marginBottom: 'var(--s-4)' }}>
+        <label className="form-label">
+          Rating {!readOnly && <span style={{ color: 'var(--color-danger)', fontSize: 'var(--text-xs)' }}>*</span>}
+        </label>
+        <div className="score-num-row" role="radiogroup" aria-label={`Score for ${meta.label}`}>
+          {[1, 2, 3, 4, 5].map((val) => (
+            <button
+              key={val}
+              type="button"
+              className={`score-num-btn ${score === val ? 'selected' : ''}`}
+              onClick={() => handleScore(val)}
+              disabled={readOnly}
+            >
+              {val}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Comment */}
+      {/* Comments Textarea */}
       <div className="form-group">
         <label className="form-label" htmlFor={`comment-${parameter}`}>
-          Why this score? {!readOnly && <span className="required-hint">(required to submit)</span>}
+          Reasoning & Examples {!readOnly && <span style={{ color: 'var(--color-danger)', fontSize: 'var(--text-xs)' }}>*</span>}
         </label>
         <textarea
           id={`comment-${parameter}`}
-          className="form-input form-textarea"
-          placeholder={`Explain your ${meta.label.toLowerCase()} score…`}
+          className="form-input"
+          placeholder={meta.placeholder}
           value={comment || ''}
           onChange={handleComment}
           readOnly={readOnly}

@@ -1,29 +1,19 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './components/Navbar';
+import SidebarLayout from './components/SidebarLayout';
 import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/ManagerDashboard';
 import FeedbackFormPage from './pages/FeedbackFormPage';
 import MyScoresPage from './pages/MyScoresPage';
 import HRDashboard from './pages/HRDashboard';
 
-// Pages — loaded lazily in later phases; stubbed here so routing works now
-// These will be replaced with real components in Phase 6, 7, 8
-const ComingSoon = ({ label }) => (
-  <div className="page-wrapper">
-    <div className="container" style={{ paddingTop: '60px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-      <h2 style={{ fontSize: 'var(--text-2xl)', marginBottom: '8px' }}>{label}</h2>
-      <p>Coming in the next phase…</p>
-    </div>
-  </div>
-);
-
 // Smart default redirect based on role
 function DefaultRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   if (user.role === 'hr') return <Navigate to="/hr" replace />;
+  if (user.role === 'manager' || user.hasDirectReports) return <Navigate to="/team" replace />;
   return <Navigate to="/scores" replace />;
 }
 
@@ -31,61 +21,56 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Navbar />
         <Routes>
-          {/* Public */}
+          {/* Public Login page without sidebar */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Default: smart redirect */}
+          {/* All Protected Routes wrapped in SidebarLayout */}
           <Route
-            path="/dashboard"
+            path="/*"
             element={
               <ProtectedRoute>
-                <DefaultRedirect />
-              </ProtectedRoute>
-            }
-          />
+                <SidebarLayout>
+                  <Routes>
+                    <Route path="dashboard" element={<DefaultRedirect />} />
 
-          {/* Manager + HR: give feedback */}
-          <Route
-            path="/team"
-            element={
-              <ProtectedRoute roles={['manager', 'hr']}>
-                <ManagerDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/feedback/:userId"
-            element={
-              <ProtectedRoute roles={['manager', 'hr']}>
-                <FeedbackFormPage />
-              </ProtectedRoute>
-            }
-          />
+                    {/* Manager / HR Feedback routes */}
+                    <Route
+                      path="team"
+                      element={
+                        <ProtectedRoute roles={['manager', 'hr']}>
+                          <ManagerDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="feedback/:userId"
+                      element={
+                        <ProtectedRoute roles={['manager', 'hr']}>
+                          <FeedbackFormPage />
+                        </ProtectedRoute>
+                      }
+                    />
 
-          {/* All roles: view own scores */}
-          <Route
-            path="/scores"
-            element={
-              <ProtectedRoute>
-                <MyScoresPage />
+                    {/* Employee & History routes */}
+                    <Route path="scores" element={<MyScoresPage />} />
+
+                    {/* HR Dashboard */}
+                    <Route
+                      path="hr"
+                      element={
+                        <ProtectedRoute roles={['hr']}>
+                          <HRDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    <Route path="*" element={<DefaultRedirect />} />
+                  </Routes>
+                </SidebarLayout>
               </ProtectedRoute>
             }
           />
-
-          {/* HR only */}
-          <Route
-            path="/hr"
-            element={
-              <ProtectedRoute roles={['hr']}>
-                <HRDashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

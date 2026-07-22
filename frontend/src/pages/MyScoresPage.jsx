@@ -3,7 +3,6 @@ import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import TrendChart from '../components/TrendChart';
 import CommentAccordion from '../components/CommentAccordion';
-import './MyScoresPage.css';
 
 const PARAMETERS = ['OWNERSHIP', 'COMMUNICATION', 'QUALITY_OF_WORK', 'COLLABORATION', 'INITIATIVE'];
 
@@ -12,13 +11,12 @@ const PARAM_LABELS = {
   COMMUNICATION:   'Communication',
   QUALITY_OF_WORK: 'Quality',
   COLLABORATION:   'Collaboration',
-  INITIATIVE:      'Initiative',
+  INITIATIVE:      'Reliability',
 };
 
 const MONTH_SHORT = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-// Compute average score across all months for a parameter
 function avgScore(history, param) {
   const values = history
     .map((h) => h.scores[param]?.score)
@@ -37,7 +35,7 @@ export default function MyScoresPage() {
   useEffect(() => {
     client.get('/feedback/my-scores')
       .then((res) => setHistory(res.data.history))
-      .catch((err) => setError(err.response?.data?.error || 'Failed to load scores'))
+      .catch((err) => setError(err.response?.data?.error || 'Failed to load score history.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -46,144 +44,140 @@ export default function MyScoresPage() {
   };
 
   return (
-    <div className="page-wrapper">
-      <div className="container scores-container">
-
-        {/* Header */}
-        <div className="scores-header">
-          <div>
-            <h1 className="page-title">My Scores</h1>
-            <p className="text-muted" style={{ marginTop: 'var(--space-1)' }}>
-              Your feedback history across all cycles
-            </p>
-          </div>
-          <div className="scores-who">
-            <div className="avatar">{user.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}</div>
-            <div>
-              <p style={{ fontWeight: 600, fontSize: 'var(--text-sm)' }}>{user.name}</p>
-              <p className="text-muted">{user.companyName}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Loading skeletons */}
-        {loading && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-            <div className="skeleton" style={{ height: '240px', borderRadius: 'var(--radius-lg)' }} />
-            <div className="skeleton" style={{ height: '180px', borderRadius: 'var(--radius-lg)' }} />
-          </div>
-        )}
-
-        {error && (
-          <div className="card" style={{ textAlign: 'center', color: 'var(--color-danger)' }}>⚠ {error}</div>
-        )}
-
-        {!loading && !error && history.length === 0 && (
-          <div className="card empty-state">
-            <div className="empty-icon">📊</div>
-            <h3>No feedback yet</h3>
-            <p className="text-muted">
-              Your scores will appear here once your manager submits feedback for a cycle.
-            </p>
-          </div>
-        )}
-
-        {!loading && history.length > 0 && (
-          <>
-            {/* Average scores strip */}
-            <div className="scores-averages">
-              {PARAMETERS.map((p) => {
-                const avg = avgScore(history, p);
-                const num = parseFloat(avg);
-                const colorClass = num >= 4 ? 'success' : num >= 3 ? 'warning' : 'danger';
-                return (
-                  <div
-                    key={p}
-                    className={`avg-card avg-card-${colorClass} ${activeParam === p ? 'avg-card-active' : ''}`}
-                    onClick={() => handleParamClick(p)}
-                    id={`avg-${p}`}
-                  >
-                    <span className="avg-value">{avg ?? '—'}</span>
-                    <span className="avg-label">{PARAM_LABELS[p]}</span>
-                    <span className="avg-sublabel text-muted">avg / 5</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Trend chart */}
-            <div className="card scores-section">
-              <h2 className="section-title" style={{ marginBottom: 'var(--space-4)' }}>
-                Score Trends
-                <span className="text-muted" style={{ fontSize: 'var(--text-sm)', fontWeight: 400, marginLeft: 'var(--space-2)' }}>
-                  (click a parameter to highlight)
-                </span>
-              </h2>
-              <TrendChart
-                history={history}
-                activeParam={activeParam}
-                onParamClick={handleParamClick}
-              />
-            </div>
-
-            {/* Score history table */}
-            <div className="card scores-section">
-              <h2 className="section-title" style={{ marginBottom: 'var(--space-4)' }}>Monthly Breakdown</h2>
-              <div className="table-wrapper">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Month</th>
-                      {PARAMETERS.map((p) => <th key={p}>{PARAM_LABELS[p]}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {history.map((entry) => (
-                      <tr key={entry.cycleId}>
-                        <td>
-                          <span style={{ fontWeight: 600 }}>
-                            {MONTH_SHORT[entry.month]} {entry.year}
-                          </span>
-                        </td>
-                        {PARAMETERS.map((p) => {
-                          const s = entry.scores[p]?.score;
-                          return (
-                            <td key={p}>
-                              {s ? (
-                                <span className={`score-chip score-${s}`}>{s}</span>
-                              ) : (
-                                <span className="text-muted">—</span>
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Comment history — accordion per month */}
-            <div className="scores-section">
-              <h2 className="section-title" style={{ marginBottom: 'var(--space-4)' }}>
-                Detailed Comments
-              </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-                {history.map((entry) => (
-                  <CommentAccordion
-                    key={entry.cycleId}
-                    month={entry.month}
-                    year={entry.year}
-                    reviewer={entry.reviewer}
-                    scores={entry.scores}
-                  />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+    <div>
+      {/* Header */}
+      <div className="page-header">
+        <h1 className="page-title">My Scores & Feedback History</h1>
+        <p className="page-subtitle">
+          <span>{user.name}</span>
+          <span className="dot">•</span>
+          <span>{user.companyName}</span>
+          <span className="dot">•</span>
+          <span>{history.length} Cycles Completed</span>
+        </p>
       </div>
+
+      {loading && (
+        <div style={{ padding: 'var(--s-8) 0', textAlign: 'center' }}>
+          <span className="spinner spinner-dark" />
+          <p style={{ marginTop: 'var(--s-2)', color: 'var(--color-text-muted)' }}>Loading your performance history...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="card" style={{ borderColor: 'var(--color-danger-border)', color: 'var(--color-danger)' }}>
+          ⚠ {error}
+        </div>
+      )}
+
+      {!loading && !error && history.length === 0 && (
+        <div className="empty-state card">
+          <div className="empty-icon">📊</div>
+          <h3>No Feedback Records Yet</h3>
+          <p style={{ color: 'var(--color-text-muted)' }}>
+            Your monthly feedback scores and comments will appear here once submitted by your manager.
+          </p>
+        </div>
+      )}
+
+      {!loading && history.length > 0 && (
+        <>
+          {/* Average Cards */}
+          <div className="avg-row">
+            {PARAMETERS.map((p) => {
+              const avg = avgScore(history, p);
+              const num = parseFloat(avg);
+              const colorClass = num >= 4 ? 'success' : num >= 3 ? 'warning' : 'danger';
+              return (
+                <div
+                  key={p}
+                  className={`avg-card avg-card-${colorClass} ${activeParam === p ? 'active' : ''}`}
+                  onClick={() => handleParamClick(p)}
+                  id={`avg-${p}`}
+                >
+                  <div className="avg-val">{avg ?? '—'}</div>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text)' }}>
+                    {PARAM_LABELS[p]}
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>Avg Score / 5</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Score Trend Chart */}
+          <div className="card" style={{ marginBottom: 'var(--s-6)' }}>
+            <h2 style={{ fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--s-4)' }}>
+              Monthly Score Trends
+            </h2>
+            <TrendChart
+              history={history}
+              activeParam={activeParam}
+              onParamClick={handleParamClick}
+            />
+          </div>
+
+          {/* Breakdown Table */}
+          <div className="card" style={{ marginBottom: 'var(--s-6)', padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: 'var(--s-4) var(--s-5)', borderBottom: '1px solid var(--color-border)' }}>
+              <h2 style={{ fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--color-text)' }}>
+                Monthly Ratings Breakdown
+              </h2>
+            </div>
+            <div className="table-wrapper" style={{ border: 'none', borderRadius: 0 }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Cycle</th>
+                    {PARAMETERS.map((p) => <th key={p}>{PARAM_LABELS[p]}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.map((entry) => (
+                    <tr key={entry.cycleId}>
+                      <td>
+                        <span style={{ fontWeight: 600, color: 'var(--color-text)' }}>
+                          {MONTH_SHORT[entry.month]} {entry.year}
+                        </span>
+                      </td>
+                      {PARAMETERS.map((p) => {
+                        const s = entry.scores[p]?.score;
+                        return (
+                          <td key={p}>
+                            {s ? (
+                              <span className={`score-chip score-${s}`}>{s}</span>
+                            ) : (
+                              <span style={{ color: 'var(--color-text-faint)' }}>—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Detailed Comments Accordion */}
+          <div>
+            <h2 style={{ fontSize: 'var(--text-base)', fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--s-4)' }}>
+              Detailed Manager Feedback
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s-3)' }}>
+              {history.map((entry) => (
+                <CommentAccordion
+                  key={entry.cycleId}
+                  month={entry.month}
+                  year={entry.year}
+                  reviewer={entry.reviewer}
+                  scores={entry.scores}
+                />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
