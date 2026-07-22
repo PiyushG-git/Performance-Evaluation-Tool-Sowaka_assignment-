@@ -1,7 +1,12 @@
 const router = require('express').Router();
+const authMiddleware = require('../middleware/auth');
+const { getCurrentCycle } = require('../controllers/cycleController');
 
-// GET /api/cycles/current — implemented in Phase 3
+// All cycle routes require authentication
+router.use(authMiddleware);
 
-router.get('/', (_req, res) => res.json({ message: 'Cycles routes ready' }));
+// GET /api/cycles/current
+// Returns the open cycle for this month (auto-creates if missing)
+router.get('/current', getCurrentCycle);
 
 module.exports = router;
