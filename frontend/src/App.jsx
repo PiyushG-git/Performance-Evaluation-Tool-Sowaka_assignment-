@@ -5,6 +5,7 @@ import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
 import ManagerDashboard from './pages/ManagerDashboard';
 import FeedbackFormPage from './pages/FeedbackFormPage';
+import MyScoresPage from './pages/MyScoresPage';
 
 // Pages — loaded lazily in later phases; stubbed here so routing works now
 // These will be replaced with real components in Phase 6, 7, 8
@@ -67,7 +68,7 @@ export default function App() {
             path="/scores"
             element={
               <ProtectedRoute>
-                <ComingSoon label="My Scores" />
+                <MyScoresPage />
               </ProtectedRoute>
             }
           />
