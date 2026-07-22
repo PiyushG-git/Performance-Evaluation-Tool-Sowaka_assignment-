@@ -1,0 +1,87 @@
+.param-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  transition: border-color var(--transition);
+}
+
+.param-card-scored {
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.param-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.param-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  background: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.param-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.param-label {
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.param-desc {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+/* Stars */
+.param-stars {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  color: rgba(255, 255, 255, 0.15);
+  padding: 0;
+  line-height: 1;
+  transition: color var(--transition), transform var(--transition);
+  cursor: pointer;
+}
+
+.star-btn:disabled {
+  cursor: default;
+}
+
+.star-btn:hover:not(:disabled),
+.star-active {
+  color: #f59e0b;
+  transform: scale(1.15);
+}
+
+.score-label-text {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-left: var(--space-2);
+  font-style: italic;
+}
+
+.required-hint {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  font-weight: 400;
+}

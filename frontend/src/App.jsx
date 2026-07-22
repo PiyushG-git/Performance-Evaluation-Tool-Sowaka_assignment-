@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
+import ManagerDashboard from './pages/ManagerDashboard';
+import FeedbackFormPage from './pages/FeedbackFormPage';
 
 // Pages — loaded lazily in later phases; stubbed here so routing works now
 // These will be replaced with real components in Phase 6, 7, 8
@@ -47,7 +49,7 @@ export default function App() {
             path="/team"
             element={
               <ProtectedRoute roles={['manager', 'hr']}>
-                <ComingSoon label="My Team" />
+                <ManagerDashboard />
               </ProtectedRoute>
             }
           />
@@ -55,7 +57,7 @@ export default function App() {
             path="/feedback/:userId"
             element={
               <ProtectedRoute roles={['manager', 'hr']}>
-                <ComingSoon label="Feedback Form" />
+                <FeedbackFormPage />
               </ProtectedRoute>
             }
           />
