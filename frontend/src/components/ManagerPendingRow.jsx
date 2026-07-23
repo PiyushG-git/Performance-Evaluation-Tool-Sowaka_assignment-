@@ -20,10 +20,12 @@ export default function ManagerPendingRow({ manager }) {
       >
         <td>
           <div className="manager-cell">
-            <div className="avatar">{getInitials(managerName)}</div>
+            <div className="header-avatar" style={{ width: '32px', height: '32px', fontSize: '11px', flexShrink: 0 }}>
+              {getInitials(managerName)}
+            </div>
             <div>
-              <p style={{ fontWeight: 600 }}>{managerName}</p>
-              <p className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>{managerEmail}</p>
+              <p style={{ fontWeight: 600, color: 'var(--color-text)' }}>{managerName}</p>
+              <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>{managerEmail}</p>
             </div>
           </div>
         </td>
@@ -43,7 +45,7 @@ export default function ManagerPendingRow({ manager }) {
         </td>
         <td style={{ textAlign: 'center' }}>
           {isFullySubmitted
-            ? <span className="badge badge-success">✓ Done</span>
+            ? <span className="badge badge-success">✓ Completed</span>
             : <span className="badge badge-warning">In Progress</span>}
         </td>
         <td style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
@@ -54,20 +56,22 @@ export default function ManagerPendingRow({ manager }) {
       {/* Expanded detail row */}
       {expanded && (
         <tr className="detail-row">
-          <td colSpan={7} style={{ padding: 0 }}>
+          <td colSpan={7}>
             <div className="detail-body">
               {/* Submitted list */}
               {submitted.length > 0 && (
                 <div className="detail-group">
-                  <p className="detail-group-label">
-                    <span className="badge badge-success">✓ Submitted</span>
-                  </p>
+                  <div className="detail-group-header">
+                    <span className="badge badge-success">✓ Submitted ({submitted.length})</span>
+                  </div>
                   <div className="detail-chips">
                     {submitted.map((e) => (
-                      <span key={e.id} className="employee-chip employee-chip-done">
-                        {getInitials(e.name)}
-                        <span>{e.name}</span>
-                      </span>
+                      <div key={e.id} className="emp-detail-card emp-detail-card-done">
+                        <div className="emp-avatar emp-avatar-done">
+                          {getInitials(e.name)}
+                        </div>
+                        <span className="emp-name">{e.name}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -76,15 +80,17 @@ export default function ManagerPendingRow({ manager }) {
               {/* Pending list */}
               {pending.length > 0 && (
                 <div className="detail-group">
-                  <p className="detail-group-label">
-                    <span className="badge badge-danger">⏳ Pending</span>
-                  </p>
+                  <div className="detail-group-header">
+                    <span className="badge badge-danger">⏳ Pending ({pending.length})</span>
+                  </div>
                   <div className="detail-chips">
                     {pending.map((e) => (
-                      <span key={e.id} className="employee-chip employee-chip-pending">
-                        {getInitials(e.name)}
-                        <span>{e.name}</span>
-                      </span>
+                      <div key={e.id} className="emp-detail-card emp-detail-card-pending">
+                        <div className="emp-avatar emp-avatar-pending">
+                          {getInitials(e.name)}
+                        </div>
+                        <span className="emp-name">{e.name}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
