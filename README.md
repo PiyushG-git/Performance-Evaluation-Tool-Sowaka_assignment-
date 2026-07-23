@@ -51,6 +51,115 @@ Key constraints:
 
 ---
 
+## Data Model — Scenario Validation
+
+> The assignment specifically asks: *"does your data model actually hold up for these scenarios, not just whether the demo screens work?"*
+>
+> Here is how each real-world scenario maps directly to a schema-level constraint or design decision — not a UI workaround.
+
+---
+
+### Scenario 1 — Priya gives feedback to her 6 team members
+
+**Model design:** The `User` table has a **self-referential `reportsTo` field**.
+
+```prisma
+reportsToId  String?                       // nullable — top-level users have no manager
+reportsTo    User?  @relation("Hierarchy") // the person this user reports to
+reports      User[] @relation("Hierarchy") // this user's direct reports
+```
+
+Priya's 6 team members each have `reportsToId = priya.id`. The API resolves her direct reports by querying `User.reports` — no hardcoding, works for any org depth.
+
+---
+
+### Scenario 2 — Priya herself gets feedback from Rohan
+
+**Model design:** `FeedbackSubmission` has **two independent foreign keys to `User`**.
+
+```prisma
+reviewerId  String  // the person GIVING feedback  → Rohan
+revieweeId  String  // the person RECEIVING feedback → Priya
+```
+
+Priya is simultaneously a `reviewerId` (gives feedback to her 6 reports) and a `revieweeId` (receives feedback from Rohan). There is no role conflict — the model treats these as independent relationships, not mutually exclusive states.
+
+---
+
+### Scenario 3 — Bright Path founder gives feedback to 8 people directly (flat hierarchy)
+
+**Model design:** `reportsToId` is **nullable**, meaning top-level users (founder, COO) simply have no manager assigned.
+
+```prisma
+reportsToId  String?  // null = no manager above them
+```
+
+Sanjay (Founder) has `reportsToId = null` and 8 entries in `reports[]`. Structurally identical to the multi-layer hierarchy at Ashoka — the model handles both shapes with the same schema, no special casing.
+
+---
+
+### Scenario 4 — Kavita (HR) checks who hasn't submitted feedback yet
+
+**Model design:** The HR "pending" query cross-references expected vs. actual submissions using two constraints:
+
+```prisma
+// One cycle per company per month — no ambiguity about which cycle is "current"
+@@unique([companyId, year, month])
+
+// One submission per (manager → employee) per cycle — no duplicates, easy gap detection
+@@unique([cycleId, reviewerId, revieweeId])
+```
+
+For every user with `reports.length > 0`, the API checks whether a non-draft `FeedbackSubmission` exists for each direct report in the current cycle. Missing rows = pending. The unique constraint guarantees no double-counting.
+
+---
+
+### Scenario 5 — Multiple companies share the same app, data stays isolated
+
+**Model design:** Every table that holds user data is scoped by `companyId`, which is indexed for query performance.
+
+```prisma
+model User          { companyId String; @@index([companyId]) }
+model FeedbackCycle { companyId String; @@index([companyId]) }
+```
+
+Every API handler extracts `companyId` from the verified JWT and applies it as a mandatory filter on every database query. A user from Ashoka Textiles cannot read or write Bright Path data — enforced at the database query level, not just the UI.
+
+---
+
+### Scenario 6 — Employees see their own scores per parameter, over past months
+
+**Model design:** Scores are stored at the **parameter level**, not rolled up, preserving full per-parameter history.
+
+```prisma
+model FeedbackScore {
+  parameter    Parameter  // enum: OWNERSHIP | COMMUNICATION | QUALITY_OF_WORK | COLLABORATION | INITIATIVE
+  score        Int        // 1–5
+  comment      String     // manager's written reasoning
+
+  // Exactly one score per parameter per submission — no gaps, no duplicates
+  @@unique([submissionId, parameter])
+}
+```
+
+The history query joins `FeedbackScore → FeedbackSubmission → FeedbackCycle`, grouped by month, giving a complete per-parameter time-series for any employee.
+
+---
+
+### Summary Table
+
+| Scenario | Schema-Level Guarantee |
+|---|---|
+| Hierarchical reporting (any depth) | Self-referential `reportsTo` on `User` |
+| Same person is reviewer AND reviewee | Separate `reviewerId` / `revieweeId` FK fields |
+| One cycle per company per month | `@@unique([companyId, year, month])` |
+| No duplicate submissions | `@@unique([cycleId, reviewerId, revieweeId])` |
+| Exactly 5 scores per submission | `Parameter` enum + `@@unique([submissionId, parameter])` |
+| Company data isolation | `companyId` on every table, enforced in every API query |
+| Top-level users with no manager | Nullable `reportsToId` |
+
+---
+
 ## Project Structure
 
 ```
