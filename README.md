@@ -3,6 +3,8 @@
 A multi-tenant monthly performance feedback platform where managers review their direct reports
 across 5 fixed parameters. Built with **React + Vite**, **Node.js + Express**, and **PostgreSQL + Prisma**.
 
+>  **Important:** This app uses **pre-seeded demo data only**. There is no UI to register new companies, create employees, or manage users. All logins, companies, and org structures are fixed via the seed script.
+
 ---
 
 ## Assumptions
@@ -29,6 +31,9 @@ across 5 fixed parameters. Built with **React + Vite**, **Node.js + Express**, a
 7. **HR sees all** — HR users can view the full company-wide pending tracker and any employee's
    feedback history.
 
+8. **No sign-up flow** — User accounts are created only via the seed script. The app is a closed
+   pilot tool, not a public product.
+
 ---
 
 ## Data Model
@@ -53,7 +58,7 @@ sowaka-eval/
 ├── backend/
 │   ├── prisma/
 │   │   ├── schema.prisma   ← Full data model
-│   │   └── seed.js         ← Seed both companies
+│   │   └── seed.js         ← Seed script for both companies
 │   ├── src/
 │   │   ├── index.js
 │   │   ├── db.js
@@ -61,6 +66,7 @@ sowaka-eval/
 │   │   ├── controllers/
 │   │   ├── middleware/
 │   │   └── utils/
+│   ├── .env.example        ← Copy this to .env and fill in your values
 │   └── package.json
 ├── frontend/
 │   ├── src/
@@ -70,69 +76,125 @@ sowaka-eval/
 
 ---
 
-## Setup
+## Setup Instructions
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL running locally (or a hosted instance)
+- PostgreSQL running locally (e.g. via pgAdmin, or `brew services start postgresql`)
 
-### 1. Clone & install
+---
+
+### Step 1 — Clone & install
 
 ```bash
 git clone <repo-url>
 cd sowaka-eval
 ```
 
-### 2. Backend setup
+---
+
+### Step 2 — Configure the backend `.env`
+
+Navigate to the `backend/` folder and create your `.env` file by copying the example:
 
 ```bash
 cd backend
-npm install
-
-# Copy and fill in your env vars
 cp .env.example .env
-# Edit DATABASE_URL in .env to point to your PostgreSQL instance
 ```
 
-### 3. Run migrations
+Now open `backend/.env` and fill in your PostgreSQL connection details:
+
+```env
+# PostgreSQL connection string
+# Format: postgresql://USERNAME:PASSWORD@HOST:PORT/DATABASE_NAME
+DATABASE_URL="postgresql://postgres:yourpassword@localhost:5432/sowaka_eval"
+
+# JWT secret — use any long random string
+JWT_SECRET="any-long-random-string-you-choose"
+
+# JWT expiry
+JWT_EXPIRES_IN="7d"
+
+# Backend port
+PORT=5000
+
+# Frontend URL (for CORS)
+CLIENT_URL="http://localhost:5173"
+```
+
+>  **Tip:** The database (`sowaka_eval` in the example) does not need to exist yet — Prisma will create the tables. But your PostgreSQL **server must be running** and the **username/password must be correct**.
+>
+> Common values if you installed PostgreSQL with default settings:
+> - Username: `postgres`
+> - Password: whatever you set during installation
+> - Host: `localhost`
+> - Port: `5432`
+
+---
+
+### Step 3 — Run database migrations
+
+This creates all the tables in your PostgreSQL database:
 
 ```bash
 npx prisma migrate dev --name init
 ```
 
-### 4. Seed the database
+---
+
+### Step 4 — Seed the database
+
+This populates both pilot companies, all employees, and the org hierarchy:
 
 ```bash
 npm run seed
 ```
 
-### 5. Start the backend
+You should see output like:
+```
+✅ Companies created
+✅ Users created for Ashoka Textiles
+✅ Users created for Bright Path Consulting
+🎉 Seed complete! All passwords are: Password@123
+```
+
+>  **Do not skip this step.** Without seeding, there are no users to log in with.
+
+---
+
+### Step 5 — Start the backend
 
 ```bash
 npm run dev
-# Server runs on http://localhost:5000
+# Server starts at http://localhost:5000
 ```
 
-### 6. Frontend setup
+---
+
+### Step 6 — Set up and start the frontend
+
+Open a new terminal:
 
 ```bash
 cd ../frontend
 npm install
 npm run dev
-# App runs on http://localhost:5173
+# App runs at http://localhost:5173
 ```
 
 ---
 
 ## Seed Login Credentials
 
-All passwords: **`Password@123`**
+> All passwords: **`Password@123`**
+>
+> You **cannot** create new accounts from the UI. Use the credentials below to log in.
 
 ### Ashoka Textiles
 
 | Email | Role | Reports To | Manages |
 |---|---|---|---|
-| amit@ashoka.com | employee (COO) | — | Rohan, Kavita |
+| amit@ashoka.com | employee (COO) | — (top-level) | Rohan, Kavita |
 | rohan@ashoka.com | manager | Amit | Priya |
 | priya@ashoka.com | manager | Rohan | 6 employees |
 | sneha@ashoka.com | employee | Priya | — |
@@ -149,16 +211,32 @@ All passwords: **`Password@123`**
 
 | Email | Role | Reports To | Manages |
 |---|---|---|---|
-| sanjay@brightpath.com | manager (Founder) | — | 8 employees + Meera |
-| meera@brightpath.com | **hr** | Founder | — |
-| aditya@brightpath.com | employee | Founder | — |
-| pooja@brightpath.com | employee | Founder | — |
-| rahul@brightpath.com | employee | Founder | — |
-| neha@brightpath.com | employee | Founder | — |
-| vivek@brightpath.com | employee | Founder | — |
-| shruti@brightpath.com | employee | Founder | — |
-| manish@brightpath.com | employee | Founder | — |
-| lakshmi@brightpath.com | employee | Founder | — |
+| sanjay@brightpath.com | manager (Founder) | — (top-level) | 8 employees + Meera |
+| meera@brightpath.com | **hr** | Sanjay | — |
+| aditya@brightpath.com | employee | Sanjay | — |
+| pooja@brightpath.com | employee | Sanjay | — |
+| rahul@brightpath.com | employee | Sanjay | — |
+| neha@brightpath.com | employee | Sanjay | — |
+| vivek@brightpath.com | employee | Sanjay | — |
+| shruti@brightpath.com | employee | Sanjay | — |
+| manish@brightpath.com | employee | Sanjay | — |
+| lakshmi@brightpath.com | employee | Sanjay | — |
+
+---
+
+## What Each Role Can Do
+
+| Feature | Employee | Manager | HR |
+|---|:---:|:---:|:---:|
+| View own score history & trends | ✅ | ✅ | ✅ |
+| See manager's written comments | ✅ | ✅ | ✅ |
+| Give feedback to direct reports | — | ✅ | ✅ |
+| Save feedback as draft | — | ✅ | ✅ |
+| Submit final feedback | — | ✅ | ✅ |
+| View company-wide pending tracker | — | — | ✅ |
+| View any employee's history | — | — | ✅ |
+| Export pending report as CSV | — | — | ✅ |
+| Search employee directory | — | — | ✅ |
 
 ---
 
@@ -172,7 +250,27 @@ All passwords: **`Password@123`**
 | GET | `/api/feedback/my-team` | manager, hr | Direct reports + submission status |
 | POST | `/api/feedback` | manager, hr | Save/update draft feedback |
 | POST | `/api/feedback/:id/submit` | manager, hr | Finalize submission |
+| GET | `/api/feedback/submission/:id` | manager, hr | Get scores for a submission |
 | GET | `/api/feedback/my-scores` | All | Own received scores history |
 | GET | `/api/hr/pending` | hr | Pending submissions tracker |
 | GET | `/api/hr/employees` | hr | All employees + status |
 | GET | `/api/hr/feedback/:userId` | hr | Any employee's feedback history |
+
+---
+
+## Troubleshooting
+
+**`DATABASE_URL` not found / Prisma error**
+- Make sure `backend/.env` exists (not just `.env.example`).
+- Double-check your PostgreSQL username, password, and that the PostgreSQL service is running.
+
+**Port 5000 already in use**
+- Another process is using port 5000. Either stop it, or change `PORT=5001` in your `backend/.env`.
+
+**`npm run seed` fails**
+- Ensure migrations ran first: `npx prisma migrate dev --name init`
+- Ensure your `DATABASE_URL` is correct and the database is reachable.
+
+**Login says "Invalid credentials"**
+- Make sure you ran `npm run seed` — without it, there are no users in the database.
+- All passwords are exactly: `Password@123`
